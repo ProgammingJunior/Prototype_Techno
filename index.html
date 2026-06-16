@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltKo - Smart Energy. Safer Living.</title>
+    <style>
+        :root {
+            --primary-blue: #0b2545;
+            --secondary-blue: #134074;
+            --bg-dark-gradient-end: #07172e;
+            --card-gradient-start: #112a46;
+            --card-gradient-end: #183059;
+            --teal: #8da9c4;
+            --light-teal: #a3c2db;
+            --accent-mint: #4fa6a0;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, var(--secondary-blue) 0%, var(--bg-dark-gradient-end) 100%);
+            color: var(--white);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation Links */
+        header {
+            background-color: rgba(11, 37, 69, 0.95);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            color: var(--white);
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Enlarge Logo Without Affecting Classes Globally */
+        #voltko-nav-logo {
+            height: auto !important;
+            max-height: 100px !important; 
+            width: auto !important;
+            display: block;
+        }
+
+        .logo span {
+            color: var(--accent-mint);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--teal);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--white);
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            width: 100%;
+        }
+
+        /* Layout Presentation Content Panel */
+        .panel-card {
+            background: linear-gradient(180deg, var(--card-gradient-start) 0%, var(--card-gradient-end) 100%);
+            color: var(--white);
+            border-radius: 24px;
+            padding: 3.5rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Decorative Background Triangles */
+        .panel-card::before {
+            content: "▲ ▲ ▲ ▲ ▲\n▲ ▲ ▲ ▲ ▲\n▲ ▲ ▲ ▲ ▲";
+            position: absolute;
+            bottom: 20px;
+            left: 25px;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.04);
+            letter-spacing: 4px;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .panel-card h2 {
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            border-bottom: 2px solid var(--accent-mint);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .panel-card p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            text-align: justify;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Interactive App Hero Area Layout */
+        .hero-layout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .hero-content {
+            max-width: 55%;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-btn {
+            background-color: var(--accent-mint);
+            color: var(--white);
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .cta-btn:hover {
+            background-color: #3d8782;
+            transform: translateY(-2px);
+        }
+
+        /* Phone frame layout */
+        .phone-mockup {
+            width: 260px;
+            height: 500px;
+            background-color: #0d1b2a;
+            border: 10px solid #222;
+            border-radius: 32px;
+            padding: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mockup-screen {
+            height: 100%;
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            background: linear-gradient(180deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);
+        }
+
+        /* Flexible Grid Systems */
+        .mv-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 3rem;
+        }
+
+        .objectives-list {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .objectives-list li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            font-size: 1.05rem;
+        }
+
+        .objectives-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            top: -2px;
+            color: var(--accent-mint);
+            font-size: 1.8rem;
+        }
+
+        .graphic-box {
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Financial Grid Boxes Layout */
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 0.9rem;
+            color: var(--teal);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .stat-box p {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--white);
+        }
+
+        /* Financial Statement Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        th {
+            background-color: rgba(79, 166, 160, 0.2);
+            color: var(--white);
+            font-weight: 600;
+            padding: 12px;
+            border-bottom: 2px solid var(--accent-mint);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        tr:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .highlight-row {
+            font-weight: bold;
+            background-color: rgba(255,255,255,0.05);
+            color: var(--white);
+        }
+
+        footer {
+            background-color: var(--primary-blue);
+            color: var(--teal);
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 900px) {
+            .hero-layout, .mv-grid, .objectives-grid {
+                flex-direction: column;
+                grid-template-columns: 1fr;
+            }
+            .hero-content {
+                max-width: 100%;
+                text-align: center;
+            }
+            .panel-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html">
+                <img id="voltko-nav-logo" src="photos/logo2.png" alt="VoltKo Logo">
+            </a>
+        </div>
+        <nav>
+            <ul>
+                <li><a id="nav-home" class="active" onclick="switchPage('home')">Home</a></li>
+                <li><a id="nav-about" onclick="switchPage('about')">Mission & Vision</a></li>
+                <li><a id="nav-description" onclick="switchPage('description')">Description</a></li>
+                <li><a id="nav-finance" onclick="switchPage('finance')">Financial Plan</a></li>
+                <li><a href="demo.html">Demo</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        
+        <section id="page-home" class="panel-card">
+            <div class="hero-layout">
+                <div class="hero-content">
+                    <h1>Smart Energy.<br>Safer Living.</h1>
+                    <p>Empowering modern homes with intelligent energy management ecosystems for sustainable, secure, and optimized daily living.</p>
+                    <button class="cta-btn" onclick="switchPage('about')">Explore Presentation</button>
+                </div>
+                <div class="phone-mockup">
+                    <div class="mockup-screen">
+                        <div style="font-size: 0.8rem; letter-spacing: 2px;">SMART HOME</div>
+                        <div style="font-size: 2rem;">⚡</div>
+                        <div style="font-size: 2rem;">🌐</div>
+                        <div style="background: #e63946; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8rem;">OFF</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="page-about" class="mv-grid" style="display: none;">
+            <div class="panel-card">
+                <h2>MISSION</h2>
+                <p>To provide intelligent and energy-efficient appliance solutions that help consumers reduce electricity consumption, protect appliances from electrical damage, monitor and remotely control appliances and promote sustainable energy practices through innovative hardware and software technology.</p>
+            </div>
+            <div class="panel-card">
+                <h2>VISION</h2>
+                <p>To become a leading smart energy technology company in the Philippines and globally by transforming ordinary appliances into intelligent, safe, and energy-efficient systems for homes and businesses. VoltKo aims to become the pavement for future smart appliance technologies and push forward innovations with smart appliance technology.</p>
+            </div>
+        </div>
+
+        <div id="page-description" style="display: none;">
+            <section class="panel-card">
+                <h2>WHAT IS VOLTKO?</h2>
+                <p>Voltko is a technology-based company focused on developing smart energy management software and hardware for household and commercial appliances. The company partners with appliance manufacturers to integrate intelligent automation, energy monitoring, and electrical protection systems directly into appliances.</p>
+                <p>Voltko aims to improve energy efficiency, reduce electricity costs, and protect appliances from electrical damage caused by power outages, surges, and hardware faults. Through desktop and mobile applications, users can monitor and manage their appliance more efficiently.</p>
+                <p>The company promotes innovation, sustainability, and smart living by combining artificial intelligence, automation, appliance monitoring and energy-saving technologies.</p>
+            </section>
+
+            <section class="panel-card">
+                <h2>OBJECTIVES</h2>
+                <div class="objectives-grid">
+                    <div>
+                        <p>Voltko aims to develop an AI-powered smart appliance software system that helps consumers manage electricity usage efficiently while protecting appliances from electrical problems such as power surges and outages. The project also focuses on providing real-time monitoring, intelligent automation, and energy-saving features through a mobile and desktop application.</p>
+                        <ul class="objectives-list">
+                            <li>To design and implement an appliance-integrated smart software platform for monitoring electricity consumption.</li>
+                            <li>To provide automated appliance protection features against power outages, voltage fluctuations, and electrical surges.</li>
+                            <li>To develop intelligent energy efficiency management using sensors and AI-powered automation.</li>
+                            <li>To create a desktop and mobile application that allows users to monitor and manage appliance energy usage in real time.</li>
+                            <li>To help consumers reduce electricity expenses and improve appliance lifespan through smart technology.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="graphic-box">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏢</div>
+                            <strong>VoltKo Ecosystem HQ</strong>
+                        </div>
+                        <div class="graphic-box">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🤖</div>
+                            <strong>AI Optimization</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-finance" style="display: none;">
+            <section class="panel-card">
+                <h2>START-UP COSTS</h2>
+                <div class="financial-grid">
+                    <div class="stat-box">
+                        <h3>Pre-Operating Expenses</h3>
+                        <p>₱51,000.00</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Capital Expenditure</h3>
+                        <p>₱65,000.00</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Working Capital</h3>
+                        <p>₱64,000.00</p>
+                    </div>
+                    <div class="stat-box" style="border-color: var(--accent-mint);">
+                        <h3>Total Capitalization</h3>
+                        <p style="color: var(--accent-mint);">₱180,000.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel-card">
+                <h2>3-YEAR PROJECTED INCOME STATEMENT</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Particulars</th>
+                                <th class="text-right">Year 1</th>
+                                <th class="text-right">Year 2</th>
+                                <th class="text-right">Year 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Projected Sales (Units)</td>
+                                <td class="text-right">360.00</td>
+                                <td class="text-right">385.20</td>
+                                <td class="text-right">412.16</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td>Gross Revenue</td>
+                                <td class="text-right">₱432,000.00</td>
+                                <td class="text-right">₱462,240.00</td>
+                                <td class="text-right">₱494,592.00</td>
+                            </tr>
+                            <tr>
+                                <td>Cost of Sales</td>
+                                <td class="text-right">₱234,000.00</td>
+                                <td class="text-right">₱250,380.00</td>
+                                <td class="text-right">₱267,904.00</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td>Gross Profit</td>
+                                <td class="text-right" style="color: var(--accent-mint);">₱198,000.00</td>
+                                <td class="text-right" style="color: var(--accent-mint);">₱211,860.00</td>
+                                <td class="text-right" style="color: var(--accent-mint);">₱226,688.00</td>
+                            </tr>
+                            <tr>
+                                <td>Operating Expenses</td>
+                                <td class="text-right">₱155,000.00</td>
+                                <td class="text-right">₱92,450.00</td>
+                                <td class="text-right">₱96,072.50</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td>Net Profit (Before & After Tax)</td>
+                                <td class="text-right">₱43,000.00</td>
+                                <td class="text-right">₱119,410.00</td>
+                                <td class="text-right">₱130,615.50</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td>Projected Return on Investment (ROI)</td>
+                                <td class="text-right" style="color: var(--accent-mint);">24%</td>
+                                <td class="text-right" style="color: var(--accent-mint);">66%</td>
+                                <td class="text-right" style="color: var(--accent-mint);">73%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VoltKo. All Rights Reserved. | By: Research Baby</p>
+    </footer>
+
+    <script>
+        function switchPage(pageId) {
+            document.getElementById('page-home').style.display = 'none';
+            document.getElementById('page-about').style.display = 'none';
+            document.getElementById('page-description').style.display = 'none';
+            document.getElementById('page-finance').style.display = 'none';
+            
+            if(pageId === 'home') document.getElementById('page-home').style.display = 'block';
+            if(pageId === 'about') document.getElementById('page-about').style.display = 'grid';
+            if(pageId === 'description') document.getElementById('page-description').style.display = 'block';
+            if(pageId === 'finance') document.getElementById('page-finance').style.display = 'block';
+            
+            const links = document.querySelectorAll('nav a');
+            links.forEach(link => link.classList.remove('active'));
+            document.getElementById('nav-' + (pageId === 'finance' ? 'finance' : pageId === 'description' ? 'description' : pageId === 'about' ? 'about' : 'home')).classList.add('active');
+        }
+    </script>
+</body>
+</html>

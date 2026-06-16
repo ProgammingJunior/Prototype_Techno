@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Voltko Smart Home Simulator</title>
+
+<style>
+/*
+body{
+    margin:0;
+    font-family:Arial;
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+}*/
+
+body{
+    margin:0;
+    font-family:Arial;
+    overflow:hidden;
+}
+
+/*
+#sidebar{
+    width:380px;
+    overflow-y:auto;
+    background:#f3f3f3;
+    padding:15px;
+    box-sizing:border-box;
+    border-right:1px solid #ccc;
+}*/
+#sidebar{
+    width:380px;
+    overflow-y:auto;
+    background:#f3f3f3;
+    padding:15px;
+    box-sizing:border-box;
+    border-right:1px solid #ccc;
+}
+
+
+
+button{
+    width:100%;
+    padding:8px;
+    margin-top:5px;
+    cursor:pointer;
+}
+
+.report{
+    background:white;
+    border:1px solid #ccc;
+    padding:10px;
+    margin-top:10px;
+}
+
+.report h3{
+    margin-top:0;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+table,
+th,
+td{
+    border:1px solid #ccc;
+}
+
+th,
+td{
+    padding:5px;
+    text-align:center;
+}
+/*
+canvas{
+
+    background:#fafafa;
+}*/
+canvas{
+    flex:1;
+    background:#fafafa;
+}
+
+.sliderContainer{
+    margin-top:15px;
+}
+
+#alertBox{
+    background:#fff3cd;
+    border:1px solid #ffc107;
+    padding:10px;
+    margin-top:10px;
+    display:none;
+}
+
+.socketTable{
+    margin-top:10px;
+}
+header{
+    background-color: rgba(11, 37, 69, 0.95);
+    padding: 1rem 5%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    height:70px;
+    box-sizing:border-box;
+}
+
+header nav a{
+    color:white;
+    text-decoration:none;
+    margin-left:40px;
+    font-weight:600;
+}
+
+#mainContent{
+    display:flex;
+    height:calc(100vh - 70px);
+}
+
+        #voltko-nav-logo {
+            height: auto !important;
+            max-height: 100px !important; 
+            width: auto !important;
+            display: block;
+        }
+</style>
+</head>
+
+<body>
+<header>
+    <div class="logo">
+        <a href="index.html"><img id="voltko-nav-logo"src="photos/logo2.png" alt="Voltko"></a>
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+
+    </nav>
+</header>
+
+<div id="mainContent">
+<div id="sidebar">
+
+<h2>Voltko Simulator</h2>
+
+<button onclick="addSocket()">Add Socket</button>
+
+<hr>
+
+<button onclick="addAppliance('TV',100,false)">Add Normal TV</button>
+<button onclick="addAppliance('TV',100,true)">Add Voltko TV</button>
+
+<button onclick="addAppliance('Fan',80,false)">Add Normal Fan</button>
+<button onclick="addAppliance('Fan',80,true)">Add Voltko Fan</button>
+
+<button onclick="addAppliance('AC',1200,false)">Add Normal AC</button>
+<button onclick="addAppliance('AC',1200,true)">Add Voltko AC</button>
+
+<button onclick="addAppliance('Fridge',250,false)">Add Normal Fridge</button>
+<button onclick="addAppliance('Fridge',250,true)">Add Voltko Fridge</button>
+
+<hr>
+
+<button onclick="enableWireMode()">
+Wire Mode
+</button>
+
+<button onclick="enableDeleteMode()">
+Delete Mode
+</button>
+
+<hr>
+
+<h3>Simulate Failure</h3>
+
+<button onclick="simulateFailure('surge')">
+Power Surge
+</button>
+
+<button onclick="simulateFailure('loss')">
+Power Loss
+</button>
+
+<button onclick="simulateFailure('heat')">
+Overheating
+</button>
+
+<div class="sliderContainer">
+
+<h3>Temperature</h3>
+
+<input
+type="range"
+id="tempSlider"
+min="0"
+max="50"
+value="25"
+oninput="draw()"
+style="width:100%;">
+
+<p>
+Temperature:
+<span id="tempValue">
+25
+</span>°C
+</p>
+
+</div>
+
+<div id="alertBox"></div>
+
+<div class="report">
+
+<h3>Total Consumption</h3>
+
+<p id="totalPower">
+0 W
+</p>
+
+</div>
+
+<div class="report">
+
+<h3>Normal Appliances</h3>
+
+<p id="normalPower">
+0 W
+</p>
+
+</div>
+
+<div class="report">
+
+<h3>Voltko Appliances</h3>
+
+<p id="voltkoPower">
+0 W
+</p>
+
+<p>
+Voltko Hardware:
+<span id="voltkoHardware">
+0
+</span> W
+</p>
+
+</div>
+
+<div class="report">
+
+<h3>Socket Consumption</h3>
+
+<table id="socketTable">
+
+<tr>
+<th>Socket</th>
+<th>Consumption</th>
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+<canvas
+id="canvas"
+width="1400"
+height="900">
+</canvas>
+</div>  <!--MAIN CONTENT-->
+
+<script>
+
+const canvas =
+document.getElementById("canvas");
+
+const ctx =
+canvas.getContext("2d");
+
+const tempSlider =
+document.getElementById(
+"tempSlider"
+);
+
+tempSlider.addEventListener(
+"input",
+()=>{
+document.getElementById(
+"tempValue"
+).innerText =
+tempSlider.value;
+
+draw();
+});
+
+let appliances = [];
+let sockets = [];
+let wires = [];
+
+let dragging = null;
+let offsetX = 0;
+let offsetY = 0;
+
+let wireMode = false;
+let deleteMode = false;
+let failureMode = null;
+
+let firstConnection = null;
+
+let nextSocket = 1;
+
+class Appliance{
+
+    constructor(
+        name,
+        power,
+        isVoltko,
+        x,
+        y
+    ){
+
+        this.id =
+            Date.now() +
+            Math.random();
+
+        this.name = name;
+        this.basePower = power;
+        this.power = power;
+
+        this.isVoltko =
+            isVoltko;
+
+        this.hardwarePower =
+            isVoltko ? 5 : 0;
+
+        this.x = x;
+        this.y = y;
+
+        this.width = 120;
+        this.height = 60;
+
+        this.on = false;
+
+        this.failed = false;
+
+        this.connectedSocket =
+            null;
+    }
+}
+
+class Socket{
+
+    constructor(
+        x,
+        y
+    ){
+
+        this.id =
+            nextSocket++;
+
+        this.x = x;
+        this.y = y;
+
+        this.width = 80;
+        this.height = 50;
+    }
+}
+
+function addSocket(){
+
+    sockets.push(
+        new Socket(
+            100 +
+            Math.random()*400,
+
+            100 +
+            Math.random()*400
+        )
+    );
+
+    draw();
+}
+
+function addAppliance(
+    name,
+    power,
+    isVoltko
+){
+
+    appliances.push(
+        new Appliance(
+            name,
+            power,
+            isVoltko,
+            600 +
+            Math.random()*500,
+
+            100 +
+            Math.random()*500
+        )
+    );
+
+    draw();
+}
+
+function getTemperature(){
+
+    return Number(
+        tempSlider.value
+    );
+}
+
+function calculateAppliancePower(
+    appliance
+){
+
+    let power =
+        appliance.basePower;
+
+    if(
+        appliance.isVoltko
+    ){
+
+        const temp =
+            getTemperature();
+
+        if(
+            appliance.name ===
+            "Fan"
+        ){
+
+            if(temp < 20){
+
+                power *= 0.6;
+            }
+
+            else if(
+                temp > 35
+            ){
+
+                power *= 1.2;
+            }
+        }
+
+        if(
+            appliance.name ===
+            "AC"
+        ){
+
+            if(temp < 20){
+
+                power *= 0.5;
+            }
+
+            else if(
+                temp > 35
+            ){
+
+                power *= 1.25;
+            }
+        }
+    }
+
+    appliance.power =
+        Math.round(power);
+
+    return appliance.power;
+}
+
+function sendAlert(
+    message
+){
+
+    const alertBox =
+        document.getElementById(
+            "alertBox"
+        );
+
+    alertBox.style.display =
+        "block";
+
+    alertBox.innerHTML =
+        message;
+
+    setTimeout(
+        ()=>{
+            alertBox.style.display =
+                "none";
+        },
+        5000
+    );
+}
+
+function simulateFailure(
+    type
+){
+
+    failureMode = type;
+
+    alert(
+        "Click an appliance."
+    );
+}
+
+function triggerFailure(
+    appliance,
+    type
+){
+
+    if(
+        appliance.isVoltko
+    ){
+
+        appliance.on =
+            false;
+
+        let msg =
+            "Voltko Protection:<br>";
+
+        if(type==="surge")
+            msg +=
+            appliance.name +
+            " shut down due to power surge.";
+
+        if(type==="loss")
+            msg +=
+            appliance.name +
+            " shut down due to power loss.";
+
+        if(type==="heat")
+            msg +=
+            appliance.name +
+            " shut down due to overheating.";
+
+        sendAlert(msg);
+
+        draw();
+
+        return;
+    }
+
+    appliance.failed =
+        true;
+
+    appliance.on =
+        false;
+
+    let msg =
+        "Failure:<br>" +
+        appliance.name +
+        " has been damaged.";
+
+    sendAlert(msg);
+
+    draw();
+}
+
+function getSocketConsumption(socket){
+
+    let total = 0;
+
+    appliances.forEach(a=>{
+
+        if(
+            a.connectedSocket === socket.id &&
+            a.on &&
+            !a.failed
+        ){
+            total +=
+                calculateAppliancePower(a);
+
+            if(a.isVoltko){
+                total +=
+                    a.hardwarePower;
+            }
+        }
+    });
+
+    return total;
+}
+
+function updateReports(){
+
+    let total = 0;
+    let normal = 0;
+    let voltko = 0;
+    let hardware = 0;
+
+    appliances.forEach(a=>{
+
+        if(
+            a.on &&
+            !a.failed
+        ){
+
+            let p =
+                calculateAppliancePower(a);
+
+            if(
+                a.isVoltko
+            ){
+                voltko += p;
+                hardware +=
+                    a.hardwarePower;
+                total +=
+                    p +
+                    a.hardwarePower;
+            }
+            else{
+                normal += p;
+                total += p;
+            }
+        }
+    });
+
+    document.getElementById(
+        "totalPower"
+    ).innerText =
+        total.toFixed(0) + " W";
+
+    document.getElementById(
+        "normalPower"
+    ).innerText =
+        normal.toFixed(0) + " W";
+
+    document.getElementById(
+        "voltkoPower"
+    ).innerText =
+        voltko.toFixed(0) + " W";
+
+    document.getElementById(
+        "voltkoHardware"
+    ).innerText =
+        hardware.toFixed(0);
+
+    const table =
+        document.getElementById(
+            "socketTable"
+        );
+
+    table.innerHTML =
+        `
+        <tr>
+            <th>Socket</th>
+            <th>Consumption</th>
+        </tr>
+        `;
+
+    sockets.forEach(socket=>{
+
+        const row =
+            document.createElement(
+                "tr"
+            );
+
+        row.innerHTML =
+        `
+        <td>
+            Socket ${socket.id}
+        </td>
+
+        <td>
+            ${getSocketConsumption(socket)}
+            W
+        </td>
+        `;
+
+        table.appendChild(row);
+    });
+}
+
+function drawSocket(
+    socket
+){
+
+    ctx.fillStyle =
+        "#e67e22";
+
+    ctx.fillRect(
+        socket.x,
+        socket.y,
+        socket.width,
+        socket.height
+    );
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "16px Arial";
+
+    ctx.fillText(
+        "Socket " +
+        socket.id,
+        socket.x + 5,
+        socket.y + 30
+    );
+}
+
+function drawAppliance(
+    appliance
+){
+
+    let color =
+        "#7f8c8d";
+
+    if(
+        appliance.isVoltko
+    ){
+        color =
+            "#3498db";
+    }
+
+    if(
+        appliance.failed
+    ){
+        color =
+            "#e74c3c";
+    }
+
+    ctx.fillStyle =
+        color;
+
+    ctx.fillRect(
+        appliance.x,
+        appliance.y,
+        appliance.width,
+        appliance.height
+    );
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "16px Arial";
+
+    ctx.fillText(
+        appliance.name,
+        appliance.x + 15,
+        appliance.y + 22
+    );
+
+    ctx.fillText(
+        appliance.on
+        ? "ON"
+        : "OFF",
+        appliance.x + 40,
+        appliance.y + 42
+    );
+
+    if(
+        appliance.isVoltko
+    ){
+        ctx.fillText(
+            "Voltko",
+            appliance.x + 20,
+            appliance.y + 58
+        );
+    }
+}
+
+function drawWires() {
+    wires.forEach(w => {
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#2c3e50";
+
+        ctx.moveTo(
+            w.socket.x + w.socket.width / 2,
+            w.socket.y + w.socket.height / 2
+        );
+
+        ctx.lineTo(
+            w.appliance.x + w.appliance.width / 2,
+            w.appliance.y + w.appliance.height / 2
+        );
+
+        ctx.stroke();
+    });
+}
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    drawWires();
+
+    sockets.forEach(
+        socket =>
+        drawSocket(socket)
+    );
+
+    appliances.forEach(
+        appliance =>
+        drawAppliance(
+            appliance
+        )
+    );
+
+    updateReports();
+    console.log(sockets);
+}
+
+function getAppliance(x, y){
+
+    for(
+        let i =
+            appliances.length - 1;
+        i >= 0;
+        i--
+    ){
+
+        const a =
+            appliances[i];
+
+        if(
+            x >= a.x &&
+            x <= a.x + a.width &&
+            y >= a.y &&
+            y <= a.y + a.height
+        ){
+            return a;
+        }
+    }
+
+    return null;
+}
+
+function getSocket(x, y){
+    for(let i = sockets.length - 1; i >= 0; i--){
+        const s = sockets[i];
+        
+        if(
+            x >= s.x &&
+            x <= s.x + s.width &&
+            y >= s.y &&
+            y <= s.y + s.height
+        ){
+            return s;
+        }
+    }
+    return null;
+}
+
+function getWire(x, y){
+
+    for(const wire of wires){
+
+        const x1 =
+            wire.socket.x +
+            wire.socket.width/2;
+
+        const y1 =
+            wire.socket.y +
+            wire.socket.height/2;
+
+        const x2 =
+            wire.appliance.x +
+            wire.appliance.width/2;
+
+        const y2 =
+            wire.appliance.y +
+            wire.appliance.height/2;
+
+        const distance =
+            Math.abs(
+                (y2-y1)*x -
+                (x2-x1)*y +
+                x2*y1 -
+                y2*x1
+            ) /
+            Math.sqrt(
+                (y2-y1)**2 +
+                (x2-x1)**2
+            );
+
+        const withinX =
+            x >=
+            Math.min(x1,x2)-10 &&
+            x <=
+            Math.max(x1,x2)+10;
+
+        const withinY =
+            y >=
+            Math.min(y1,y2)-10 &&
+            y <=
+            Math.max(y1,y2)+10;
+
+        if(
+            distance < 8 &&
+            withinX &&
+            withinY
+        ){
+            return wire;
+        }
+    }
+
+    return null;
+}
+
+function enableWireMode() {
+    wireMode = true;
+    deleteMode = false;      // disable other modes
+    failureMode = null;
+    firstConnection = null;
+
+    alert(
+        "Wire Mode:\nClick a socket, then click an appliance."
+    );
+}
+
+function enableDeleteMode() {
+    deleteMode = true;
+    wireMode = false;
+    failureMode = null;
+    firstConnection = null;
+
+    alert(
+        "Delete Mode:\nClick an appliance, socket, or wire."
+    );
+}
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
+
+canvas.addEventListener(
+    "mousedown",
+    e => {
+const scaleX = canvas.width / canvas.clientWidth;
+const scaleY = canvas.height / canvas.clientHeight;
+
+const x = (e.clientX - canvas.getBoundingClientRect().left) * scaleX;
+const y = (e.clientY - canvas.getBoundingClientRect().top) * scaleY;
+
+        const appliance = getAppliance(x, y);
+        const socket = getSocket(x, y);
+        const wire = getWire(x, y);
+        console.log("Mouse:", x, y);
+console.log("Socket found:", getSocket(x, y));
+
+        /* DELETE MODE */
+        if(deleteMode){
+            if(wire){
+                wires = wires.filter(w => w !== wire);
+                if(wire.appliance){
+                    wire.appliance.connectedSocket = null;
+                }
+                deleteMode = false;
+                draw();
+                return;
+            }
+
+            if(appliance){
+                wires = wires.filter(w => w.appliance !== appliance);
+                appliances = appliances.filter(a => a !== appliance);
+                deleteMode = false;
+                draw();
+                return;
+            }
+
+            if(socket){
+                wires = wires.filter(w => w.socket !== socket);
+                appliances.forEach(a => {
+                    if(a.connectedSocket === socket.id){
+                        a.connectedSocket = null;
+                    }
+                });
+                sockets = sockets.filter(s => s !== socket);
+                deleteMode = false;
+                draw();
+                return;
+            }
+        }
+
+        /* FAILURE MODE */
+        if(failureMode && appliance){
+            triggerFailure(appliance, failureMode);
+            failureMode = null;
+            return;
+        }
+
+        /* WIRE MODE */
+if (wireMode) {
+
+    // First click: choose socket
+    if (firstConnection === null) {
+
+        if (!socket) {
+            alert("First click must be a socket.");
+            return;
+        }
+
+        firstConnection = socket;
+        return;
+    }
+
+    // Second click: choose appliance
+    if (!appliance) {
+        alert("Second click must be an appliance.");
+        return;
+    }
+
+    // Remove previous wire of this appliance
+    wires = wires.filter(w => w.appliance !== appliance);
+
+    // Save connection
+    appliance.connectedSocket = firstConnection.id;
+
+    wires.push({
+        socket: firstConnection,
+        appliance: appliance
+    });
+
+    // Reset wire mode
+    firstConnection = null;
+    wireMode = false;
+
+    draw();
+    return;
+}
+
+        /* DRAGGING */
+        if(appliance){
+            dragging = appliance;
+            offsetX = x - appliance.x;
+            offsetY = y - appliance.y;
+            return;
+        }
+
+        if(socket){
+            dragging = socket;
+            offsetX = x - socket.x;
+            offsetY = y - socket.y;
+            return;
+        }
+    }
+);
+
+canvas.addEventListener(
+    "mousemove",
+    e => {
+        if(!dragging) return;
+
+ const rect = canvas.getBoundingClientRect();
+
+const x = (e.clientX - rect.left) *
+          (canvas.width / rect.width);
+
+const y = (e.clientY - rect.top) *
+          (canvas.height / rect.height);
+
+        dragging.x = x - offsetX;
+        dragging.y = y - offsetY;
+
+        draw();
+    }
+);
+
+
+canvas.addEventListener(
+    "mouseup",
+    ()=>{
+        dragging = null;
+    }
+);
+
+canvas.addEventListener(
+    "dblclick",
+    e=>{
+
+
+const rect = canvas.getBoundingClientRect();
+
+const x = (e.clientX - rect.left) *
+          (canvas.width / rect.width);
+
+const y = (e.clientY - rect.top) *
+          (canvas.height / rect.height);
+
+const appliance = getAppliance(x, y);
+
+        if(
+            !appliance
+        )
+            return;
+
+        if(
+            appliance.failed
+        ){
+
+            alert(
+                "This appliance has failed and is unusable."
+            );
+
+            return;
+        }
+
+        if(
+            appliance.connectedSocket ===
+            null
+        ){
+
+            alert(
+                "Connect the appliance to a socket first."
+            );
+
+            return;
+        }
+
+        appliance.on =
+            !appliance.on;
+
+        draw();
+    }
+);
+
+document.addEventListener(
+    "keydown",
+    e=>{
+
+        if(
+            e.key === "w" ||
+            e.key === "W"
+        ){
+            enableWireMode();
+        }
+
+        if(
+            e.key === "Delete"
+        ){
+            enableDeleteMode();
+        }
+
+        if(
+            e.key === "Escape"
+        ){
+            wireMode = false;
+            deleteMode = false;
+            failureMode = null;
+            firstConnection = null;
+
+            canvas.style.cursor =
+                "default";
+        }
+    }
+);
+
+/* -----------------------
+   DEMO STARTING OBJECTS
+------------------------ */
+
+sockets.push(
+    new Socket(
+        120,
+        150
+    )
+);
+
+sockets.push(
+    new Socket(
+        120,
+        300
+    )
+);
+
+sockets.push(
+    new Socket(
+        120,
+        450
+    )
+);
+
+const demoTV =
+    new Appliance(
+        "TV",
+        100,
+        false,
+        600,
+        150
+    );
+
+const demoFan =
+    new Appliance(
+        "Fan",
+        80,
+        true,
+        600,
+        320
+    );
+
+appliances.push(
+    demoTV
+);
+
+appliances.push(
+    demoFan
+);
+
+/* -----------------------
+   UPDATE LOOP
+------------------------ */
+
+setInterval(()=>{
+
+    appliances.forEach(a=>{
+
+        if(
+            a.on &&
+            !a.failed
+        ){
+            calculateAppliancePower(
+                a
+            );
+        }
+    });
+
+    draw();
+
+},1000);
+
+/* -----------------------
+   OPTIONAL REPORT EXPORT
+------------------------ */
+
+function exportReport(){
+
+    let report =
+        "VOLTKO REPORT\n\n";
+
+    report +=
+        "Temperature: " +
+        getTemperature() +
+        "°C\n\n";
+
+    report +=
+        "TOTAL POWER: " +
+        document.getElementById(
+            "totalPower"
+        ).innerText +
+        "\n";
+
+    report +=
+        "NORMAL POWER: " +
+        document.getElementById(
+            "normalPower"
+        ).innerText +
+        "\n";
+
+    report +=
+        "VOLTKO POWER: " +
+        document.getElementById(
+            "voltkoPower"
+        ).innerText +
+        "\n";
+
+    report +=
+        "VOLTKO HARDWARE: " +
+        document.getElementById(
+            "voltkoHardware"
+        ).innerText +
+        " W\n\n";
+
+    sockets.forEach(s=>{
+
+        report +=
+            "Socket " +
+            s.id +
+            ": " +
+            getSocketConsumption(
+                s
+            ) +
+            " W\n";
+    });
+
+    const blob =
+        new Blob(
+            [report],
+            {
+                type:
+                "text/plain"
+            }
+        );
+
+    const a =
+        document.createElement(
+            "a"
+        );
+
+    a.href =
+        URL.createObjectURL(
+            blob
+        );
+
+    a.download =
+        "voltko_report.txt";
+
+    a.click();
+}
+
+/* -----------------------
+   ADD EXPORT BUTTON
+------------------------ */
+
+const exportButton =
+    document.createElement(
+        "button"
+    );
+
+exportButton.innerText =
+    "Export Report";
+
+exportButton.onclick =
+    exportReport;
+
+document.getElementById(
+    "sidebar"
+).appendChild(
+    exportButton
+);
+
+/* -----------------------
+   FIRST DRAW
+------------------------ */
+
+draw();
+
+</script>
+
+</body>
+</html>
