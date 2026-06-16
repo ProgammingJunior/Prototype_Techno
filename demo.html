@@ -5,14 +5,7 @@
 <title>Voltko Smart Home Simulator</title>
 
 <style>
-/*
-body{
-    margin:0;
-    font-family:Arial;
-    display:flex;
-    height:100vh;
-    overflow:hidden;
-}*/
+
 
 body{
     margin:0;
@@ -20,15 +13,7 @@ body{
     overflow:hidden;
 }
 
-/*
-#sidebar{
-    width:380px;
-    overflow-y:auto;
-    background:#f3f3f3;
-    padding:15px;
-    box-sizing:border-box;
-    border-right:1px solid #ccc;
-}*/
+
 #sidebar{
     width:380px;
     overflow-y:auto;
@@ -37,7 +22,6 @@ body{
     box-sizing:border-box;
     border-right:1px solid #ccc;
 }
-
 
 
 button{
@@ -75,11 +59,7 @@ td{
     padding:5px;
     text-align:center;
 }
-/*
-canvas{
 
-    background:#fafafa;
-}*/
 canvas{
     flex:1;
     background:#fafafa;
@@ -128,7 +108,10 @@ header nav a{
             width: auto !important;
             display: block;
         }
+
+
 </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
@@ -265,6 +248,21 @@ Voltko Hardware:
 </table>
 
 </div>
+<div class="report">
+
+    <h3>Mobile Control and Report</h3>
+
+    <button onclick="turnAllVoltko(true)">
+        Turn ON All Voltko Appliances
+    </button>
+
+    <button onclick="turnAllVoltko(false)">
+        Turn OFF All Voltko Appliances
+    </button>
+
+    <div id="mobileControlContainer"></div>
+
+</div>
 
 </div>
 
@@ -370,6 +368,145 @@ class Socket{
         this.width = 80;
         this.height = 50;
     }
+}
+function toggleVoltkoAppliance(id){
+
+    const appliance =
+        appliances.find(
+            a =>
+            a.id == id
+        );
+
+    if(!appliance)
+        return;
+
+    if(appliance.failed)
+        return;
+
+    if(
+        appliance.connectedSocket === null
+    ){
+        alert(
+            "Appliance is not connected to a socket."
+        );
+        return;
+    }
+
+    appliance.on =
+        !appliance.on;
+
+    draw();
+}
+function updateMobileControl(){
+
+    const container =
+        document.getElementById(
+            "mobileControlContainer"
+        );
+
+    container.innerHTML = "";
+
+    appliances.forEach(a=>{
+
+        if(!a.isVoltko)
+            return;
+
+const appliancePower =
+    a.on && !a.failed
+    ? calculateAppliancePower(a)
+    : 0;
+
+const hardwarePower =
+    a.on && !a.failed
+    ? a.hardwarePower
+    : 0;
+
+const totalPower =
+    appliancePower +
+    hardwarePower;
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "report";
+
+        card.innerHTML = `
+            <h4>${a.name}</h4>
+
+            <p>
+                Status:
+                ${a.on ? "ON" : "OFF"}
+            </p>
+
+<p>
+    Appliance Consumption:
+    ${appliancePower} W
+</p>
+
+<p>
+    Voltko Hardware:
+    ${hardwarePower} W
+</p>
+
+<p>
+    Total Consumption:
+    ${totalPower} W
+</p>
+
+            <p>
+                Health:
+                ${
+                    a.failed
+                    ? "Damaged"
+                    : "Healthy"
+                }
+            </p>
+
+            <p>
+                Warning:
+                ${
+                    a.warning ||
+                    "No warnings"
+                }
+            </p>
+
+            <button
+                onclick="
+                    toggleVoltkoAppliance(
+                        '${a.id}'
+                    )
+                ">
+                ${
+                    a.on
+                    ? "Turn OFF"
+                    : "Turn ON"
+                }
+            </button>
+        `;
+
+        container.appendChild(card);
+    });
+}
+function turnAllVoltko(state){
+
+    appliances.forEach(a=>{
+
+        if(
+            !a.isVoltko ||
+            a.failed
+        )
+            return;
+
+        if(
+            a.connectedSocket === null
+        )
+            return;
+
+        a.on = state;
+    });
+
+    draw();
 }
 
 function addSocket(){
@@ -523,21 +660,27 @@ function triggerFailure(
         let msg =
             "Voltko Protection:<br>";
 
-        if(type==="surge")
-            msg +=
-            appliance.name +
-            " shut down due to power surge.";
+        if(type==="surge"){
+            appliance.warning =
+            "Power Surge detected.";
 
-        if(type==="loss")
+            msg += appliance.name +
+            " shut down due to power surge.";}
+
+        if(type==="loss"){
+            appliance.warning =
+            "Power Loss detected.";
             msg +=
             appliance.name +
             " shut down due to power loss.";
-
-        if(type==="heat")
+        }
+        if(type==="heat"){
+            appliance.warning =
+            "Overheating detected.";
             msg +=
             appliance.name +
             " shut down due to overheating.";
-
+        }
         sendAlert(msg);
 
         draw();
@@ -811,6 +954,8 @@ function draw(){
 
     updateReports();
     console.log(sockets);
+        updateReports();
+    updateMobileControl();
 }
 
 function getAppliance(x, y){
